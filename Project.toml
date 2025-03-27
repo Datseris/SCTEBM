@@ -1,7 +1,22 @@
 name = "SCTEBM"
 authors = ["George Datseris"]
-[compat]
-julia = "1.10.8"
-DrWatson = "2.18.0"
+
 [deps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+ConceptualClimateModels = "3e640dcb-3446-4ed7-aadb-0366b77312ec"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
+DynamicalSystems = "61744808-ddfa-5f27-97ff-6e42cc95d634"
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
+MakieForProjects = "24dc64cf-9d0d-406f-af0b-13a4c1186bb2"
+ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
+OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
+PkgCite = "50d0efc5-baaf-4329-a409-faca2d9bd902"
+Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
+
+[compat]
+DrWatson = "2.18.0"
+julia = "1.10.8"
