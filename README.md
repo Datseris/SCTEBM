@@ -35,10 +35,13 @@ If you attempted to reproduce something from this codebase but failed, open a Gi
 The codebase utilizes heavily the following:
 
 - [DynamicalSystems.jl](https://juliadynamics.github.io/DynamicalSystemsDocs.jl/dynamicalsystems/dev/)
-- ConceptualClimateModels.jl and in particular the submodule [CloudToppedMixedLayerModels](link_here).
+- ConceptualClimateModels.jl and in particular the submodule [CloudToppedMixedLayerModels](https://juliadynamics.github.io/ConceptualClimateModels.jl/stable/submodules/ctmlm/).
 
 If you want to engage meaningfully with expanding the SCTEBM you probably want
-to read those documentation pages first.
+to read those documentation pages first. The most relevant pages are:
+- The DynamicalSystems.jl [overarching tutorial](https://juliadynamics.github.io/DynamicalSystemsDocs.jl/dynamicalsystems/dev/tutorial/)
+- The ConceptualClimateModels.jl [tutorial](https://juliadynamics.github.io/ConceptualClimateModels.jl/dev/)
+- The [examples](https://juliadynamics.github.io/ConceptualClimateModels.jl/dev/examples/ctmlm/) for using mixed layer models and adding clouds.
 
 ## SCTEBM Variants
 

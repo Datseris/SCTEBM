@@ -24,9 +24,9 @@ include("playground_helpers.jl")
 eqs = [
     # clouds
     CTMLM.cf_dynamic(:sigmoid),
-    CTMLM.decoupling_parameter(),
+    CTMLM.decoupling_variable(),
     # TimeDerivative(CTMLM.C, 0), # use this to make cloud fraction a fixed number
-    CTMLM.CLT ~ CTMLM.cloud_layer_thickness(:Bolton1980),
+    CTMLM.cloud_layer_thickness(:Bolton1980),
     CTMLM.cloud_emissivity(:fraction),
     # Boundary layer standard stuff
     CTMLM.sst_dynamic(),
@@ -46,7 +46,7 @@ eqs = [
         cloud_fraction = false
     ),
     CTMLM.cloud_shortwave_warming(:insolation),
-    CTMLM.bbl_radiative_cooling(:ctrc),
+    CTMLM.mlm_radiative_cooling(:ctrc),
     CTMLM.downwards_longwave_radiation(:three_layer),
     CTMLM.entrainment_velocity(:Stevens2006; w_e = CTMLM.w_e, use_augmentation = true),
 
