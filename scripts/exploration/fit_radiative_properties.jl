@@ -1,3 +1,4 @@
+# For fitting cloud albedo based on expressions of old papers
 using DrWatson
 @quickactivate
 include(srcdir("theme.jl"))

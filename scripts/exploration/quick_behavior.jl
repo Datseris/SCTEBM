@@ -25,7 +25,7 @@ distributions = Dict(
     :δ_FTR => Uniform(0, 10),
 )
 
-observables_to_obtain = [:C, :SST,]
+observables_to_obtain = [:C, :SST]
 
 foldergroup = ["sims", "quick_obs_distr"]
 
