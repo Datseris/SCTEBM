@@ -17,6 +17,7 @@ include("playground_helpers.jl")
 
 @parameters p = 5.0 e_m = 0.3 SST_X_0 = 0.0 q_x_rate = 2 β₋ = 0.3
 @variables fake(t) = 0.5
+@variables z_cb_ex(t)
 @variables obs(t)
 @variables clt2(t)
 @variables w_e2(t)
@@ -26,7 +27,7 @@ eqs = [
     CTMLM.cf_dynamic(:sigmoid),
     CTMLM.decoupling_variable(),
     # TimeDerivative(CTMLM.C, 0), # use this to make cloud fraction a fixed number
-    CTMLM.cloud_layer_thickness(:Bolton1980),
+    CTMLM.cloud_base_height(:Bolton1980),
     CTMLM.cloud_emissivity(:fraction),
     # Boundary layer standard stuff
     CTMLM.sst_dynamic(),
@@ -57,24 +58,27 @@ eqs = [
     # CTMLM.q_x ~ p*max(CTMLM.q_saturation(CTMLM.s_b)/CTMLM.q_saturation(300) - 1, 0),
     ParameterProcess(CTMLM.s_x, 0.0),
 
-    # CTMLM.ζ ~ CTMLM.CLT*β₋*(1 - CTMLM.C)/0.7/2,
-    CTMLM.ζ ~ CTMLM.i_𝒟*CTMLM.CLT*β₋/2,
+    # CTMLM.ζ ~ CTMLM.RCT*β₋*(1 - CTMLM.C)/0.7/2,
+    CTMLM.ζ ~ CTMLM.i_𝒟*CTMLM.RCT*β₋/2,
     # CTMLM.bbl_Δ₊sᵥ(),
     # For demonstration:
-    # TimeDerivative(CTMLM.ζ, CTMLM.CLT*β₋*(1 - CTMLM.C)/2, 0.25),
+    # TimeDerivative(CTMLM.ζ, CTMLM.RCT*β₋*(1 - CTMLM.C)/2, 0.25),
     # CTMLM.w_e ~ 1e-3(fake*(CTMLM.SST/300) + 0.5),
     # fake ~ cos(t)^2,
 
-    # CTMLM.LWP ~ CTMLM.liquid_water_path(CTMLM.T_t, CTMLM.CLT, CTMLM.z_b, CTMLM.s_b, CTMLM.q_b),
+    CTMLM.LWP ~ CTMLM.liquid_water_path_linear(),
+
+    # CTMLM.LWP ~ CTMLM.liquid_water_path(CTMLM.T_t, CTMLM.RCT, CTMLM.z_b, CTMLM.s_b, CTMLM.q_b),
 
     # check additional variables:
-    # clt2 ~ CTMLM.cloud_layer_thickness(:Bolton1980),
+    # clt2 ~ CTMLM.cloud_base_height(:Bolton1980),
     # CTMLM.entrainment_velocity(:LL96DG14; w_e = w_e2, e_e = 0.7),
+    CTMLM.CRC ~ CTMLM.CRClw - CTMLM.CRCsw,
 
     # CTMLM.entrainment_velocity(:DalGesso2014; w_e = w_e2, use_augmentation = true),
 
     # Here I am testing enabling the decoupling
-    CTMLM.𝒹_q ~ clamp((CTMLM.z_b*CTMLM.CLT/2750)^1.3, 0, 0.5),
+    CTMLM.𝒹_q ~ clamp((CTMLM.z_b*CTMLM.RCT/2750)^1.3, 0, 0.5),
     CTMLM.𝒹_s ~ 0.5*CTMLM.𝒹_q,
     # You can re-form analytically the expressions
     # from the `𝒹` definitions to my existing inversion as:
@@ -85,9 +89,10 @@ eqs = [
     # one restores the "correct" balance of heights... E.g.:
     # CTMLM.ΔF ~ 40.0,
     # fake ~ CTMLM.Cᵢ,
-    CTMLM.CRC ~ CTMLM.CRClw - CTMLM.CRCsw,
+    # Other observables I may care about
+    CTMLM.cloud_base_height(:exact, z_cb_ex),
 
-    # obs ~ CTMLM.cloud_layer_thickness(:Bolton1980)
+    # obs ~ (CTMLM.z_cb - CTMLM_z_ct)^2
 ]
 
 ds = processes_to_coupledodes(eqs, CTMLM;
@@ -101,7 +106,7 @@ set_parameter!(ds, :q_x_rate, 2)
 # the `GUI_obs` can be a premade configuration or a vector of things to observe
 # which can include arbitrary symbolic expressions or functions as per DynamicalSystems.jl
 # GUI_obs = :temperature
-GUI_obs = [:LHF, :CLT, :ΔF, :CTRC, CTMLM.CRClw/CTMLM.C]
+GUI_obs = [:CLT, :LWP, :LWP2, :z_cb, :z_cb_ex]
 # The `GUI_par` can only be a vector of symbols
 GUI_par = [:U, :D, :δ_Δ₊T, :α_C]
 

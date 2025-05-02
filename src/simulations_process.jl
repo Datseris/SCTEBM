@@ -1,4 +1,5 @@
 include("theme.jl") # to enable plotting during processing
+include("simulations_run.jl") # calls most functions from here
 
 function has_bottleneck(attractors, convergence)
     length(attractors) == 1 || return false # specific to my system: only if 1 attractor exists there is a bottleneck
@@ -53,10 +54,12 @@ function multiparameter_multistability_process(input;
         foldergroup = ["sims", "random_params_sims"],
         parameters_to_obtain = [:U, :D, :RH₊, :δ_Δ₊T, :δ_FTR, :CO2],
         observables_to_obtain = [
-            :C, :SST, :q_b, :z_b, :s_b, :CTRC, :Ld, :Lnet, :LHF, :CLT, :SHF, :T₊, :ASW,
+            :C, :SST, :q_b, :z_b, :s_b, :CTRC, :Ld, :Lnet, :LHF, :RCT, :SHF, :T₊, :ASW,
         ],
         delete_files = false, plot_density = true, plot_rmi = true, trials = 1000,
+        save_plots = true,
         xMI = parameters_to_obtain, yMI = [:SST, :C], estimate_rmi = true,
+        save_processed_output = true,
     )
     # init
     filesfolder = datadir(foldergroup..., savename(input))
@@ -83,7 +86,6 @@ function multiparameter_multistability_process(input;
 
         # get all observables in the same containers
         for O in observables_to_obtain
-            # TODO: If O isn't a key of the observables, I can instantiate the dynamical system
             append!(observables_values[O], observables[O])
         end
         # Also get each parameter in the same containers, and I need to duplicate parameters
@@ -100,14 +102,15 @@ function multiparameter_multistability_process(input;
     output["cumulus%"] = 100count(cumulus)/N
     output["stratocumulus%"] = 100count(stratocumulus)/N
     output["multistable%"] = 100count(>(1), natt)/N
-    output["quartiles_SST"] = quantile(observables_values[:SST], [0.25, 0.5, 0.75])
-    output["quartiles_C"] = quantile(observables_values[:C], [0.25, 0.5, 0.75])
-    output["quartiles_z"] = quantile(observables_values[:z_b], [0.25, 0.5, 0.75])
-    output["quartiles_q"] = quantile(observables_values[:q_b], [0.25, 0.5, 0.75])
-    output["quartiles_s"] = quantile(observables_values[:s_b], [0.25, 0.5, 0.75])
+    # if there are dynamic variables in the requested observables, save their quartiles.
+    # (this allows to extract any other observable at the same quartiles)
+    for dynvar in (:SST, :C, :z_b, :q_b, :s_b)
+        !haskey(observables_values, dynvar) && continue
+        output["quartiles_$(dynvar)"] = quantile(observables_values[dynvar], [0.25, 0.5, 0.75])
+    end
 
     # densities
-    plot_density && plot_densities(input, observables_values, foldergroup)
+    plot_density && plot_densities(input, observables_values, foldergroup, save_plots)
 
     # mutual infos
     if estimate_rmi
@@ -122,7 +125,7 @@ function multiparameter_multistability_process(input;
             end
         end
         output["rMI"] = rMI
-        plot_rmi && plot_rmi_scatters(input, observables_values, parameters_values, xMI, yMI, rMI, foldergroup)
+        plot_rmi && plot_rmi_scatters(input, observables_values, parameters_values, xMI, yMI, rMI, foldergroup, save_plots)
     end
 
     # Delete the individual files
@@ -133,14 +136,15 @@ function multiparameter_multistability_process(input;
         end
     end
 
-    # save the final output
-    outfile = datadir(foldergroup..., savename(input, "jld2"))
-    wsave(outfile, output)
+    if save_processed_output
+        outfile = datadir(foldergroup..., savename(input, "jld2"))
+        wsave(outfile, output)
+    end
 
     return output
 end
 
-function plot_densities(input, observables_values, foldergroup)
+function plot_densities(input, observables_values, foldergroup, save_plots = true)
     fig = Figure(size = (1200, 1000))
     ci = 1
     for (k, v) in observables_values
@@ -162,11 +166,13 @@ function plot_densities(input, observables_values, foldergroup)
     figuretitle!(fig, savename(input; connector = ", "))
     colgap!(fig.layout, 25)
     display(fig)
-    wsave(plotsdir(foldergroup..., savename("distributions", input, "png")), fig)
+    if save_plots
+        wsave(plotsdir(foldergroup..., savename("distributions", input, "png")), fig)
+    end
     return
 end
 
-function plot_rmi_scatters(input, observables_values, parameters_values, xMI, yMI, rMI, foldergroup)
+function plot_rmi_scatters(input, observables_values, parameters_values, xMI, yMI, rMI, foldergroup, save_plots = true)
     fig, axs = axesgrid(length(yMI), length(xMI);
         size = (1200, 400), sharex = true, sharey = true,
         xlabels = string.(xMI), ylabels = string.(yMI)
@@ -194,15 +200,20 @@ function plot_rmi_scatters(input, observables_values, parameters_values, xMI, yM
 
     figuretitle!(fig, savename(input; connector = ", "))
     display(fig)
-    wsave(plotsdir(foldergroup..., savename("rmiscatters", input, "png")), fig)
-
+    if save_plots
+        wsave(plotsdir(foldergroup..., savename("rmiscatters", input, "png")), fig)
+    end
     return
 end
 
 
 function process_multiparam_multistability_analysis(input, params, foldergroup;
         force = false, delete_files = true,
-        starting_parameters = Dict(), kw_process = NamedTuple(), kw_analysis = NamedTuple(),
+        starting_parameters = Dict(),
+        observables_to_obtain = [
+            :C, :SST, :q_b, :z_b, :s_b, :CTRC, :Ld, :Lnet, :LHF, :RCT, :SHF, :T₊, :ASW
+        ],
+        kw_process = NamedTuple(), kw_analysis = NamedTuple(),
     )
     # skip if the whole simulation has been performed already
     outfile = datadir(foldergroup..., savename(input, "jld2"))
@@ -216,11 +227,14 @@ function process_multiparam_multistability_analysis(input, params, foldergroup;
     # otherwise, perform the whole analysis
     ebm, eqs = ctmlm_setup(; input..., starting_parameters)
     multiparameter_multistability_analysis(ebm, params;
-        filename = savename(input), foldergroup, kw_analysis...
+        filename = savename(input), foldergroup, observables_to_obtain, kw_analysis...
     )
     # then aggregate the individual parameter conbimation simulations
     # into a single file and delete the individual files
-    multiparameter_multistability_process(input; foldergroup, delete_files, kw_process...)
+    output = multiparameter_multistability_process(input;
+        foldergroup, delete_files, observables_to_obtain, kw_process...
+    )
+    return output
 end
 
 # Make sure the aspects ordering is like in the paper table

@@ -105,7 +105,7 @@ function multiparameter_multistability_analysis(
         ebm::DynamicalSystem, paramsampler;
         foldergroup = folders_from_params(paramsampler), density = 21, extra = 5, N = 1000,
         observables_to_obtain = [
-            :C, :SST, :q_b, :z_b, :s_b, :CTRC, :Ld, :Lnet, :LHF, :CLT, :SHF, :T₊, :ASW
+            :C, :SST, :q_b, :z_b, :s_b, :CTRC, :Ld, :Lnet, :LHF, :RCT, :SHF, :T₊, :ASW
         ],
         filename, keep_mean = true,
     )
@@ -131,7 +131,7 @@ function multiparameter_multistability_analysis(
         fractions, labels, convergence, attractors = multistability_analysis(ds, ics)
 
         # Step 5: obtain all observables to save; save equations is probably too complex
-        observables = extract_observables(ds, attractors, observables_to_obtain; keep_mean)
+        observables = extract_observables(ds, attractors, observables_to_obtain, keep_mean)
 
         # Step 6: save output; but be conservative
         # TODO: once https://github.com/SciML/ModelingToolkit.jl/issues/3444 is fixed,
@@ -150,7 +150,7 @@ end
 
 using Statistics: mean
 
-function extract_observables(ds::DynamicalSystem, attractors::Dict, observables; keep_mean = false)
+function extract_observables(ds::DynamicalSystem, attractors::Dict, observables, keep_mean = true)
     observables_values = Dict(Symbol(k) => Float64[] for k in observables)
     for A in values(attractors)
         # first, select the points
