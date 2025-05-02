@@ -27,7 +27,7 @@ function ctmlm_setup(;
         cooling = :q_x,
         w_m = false,
         cdversion = :sigmoid,
-        ε_c = :fraction, T_c_version = :top,
+        ε_C = :fraction, T_c_version = :top,
         invdec = true, # enable decoupling augmentations with i𝒹
         fcrc = true, # fractional cloud radiative cooling, ∝ C
     )
@@ -55,8 +55,8 @@ function ctmlm_setup(;
         CTMLM.bbl_emission_temperature(),
 
         # Radiation
-        CTMLM.cloud_longwave_cooling(cloud_fraction = (ε_c ≠ :fraction && fcrc)),
-        CTMLM.cloud_emissivity(ε_c),
+        CTMLM.cloud_longwave_cooling(cloud_fraction = (ε_C ≠ :fraction && fcrc)),
+        CTMLM.cloud_emissivity(ε_C),
         CTMLM.cloud_shortwave_warming(:insolation; cloud_fraction = fcrc),
         CTMLM.mlm_radiative_cooling(ΔF),
         CTMLM.downwards_longwave_radiation(Ld),
@@ -87,12 +87,15 @@ function ctmlm_setup(;
     if invdec
         append!(eqs, [
             # clamping makes numerical integration stable
-            CTMLM.𝒹_q ~ clamp((CTMLM.z_b*CTMLM.CLT/2750)^1.3, 0, 0.5),
+            CTMLM.𝒹_q ~ clamp((CTMLM.CLT/2750)^1.3, 0, 0.5),
             CTMLM.𝒹_s ~ 0.5*CTMLM.𝒹_q,
             CTMLM.Δ₊q ~ (1 - CTMLM.i_𝒟*CTMLM.𝒹_q)*(CTMLM.q₊ - CTMLM.q_b),
             CTMLM.Δ₊s ~ (1 - CTMLM.i_𝒟*CTMLM.𝒹_s)*(CTMLM.s₊ - CTMLM.s_b),
         ])
     end
+
+    # cloud radiation
+    append!(eqs, CTMLM.cloud_albedo())
 
     append!(eqs, extra_eqs)
 
