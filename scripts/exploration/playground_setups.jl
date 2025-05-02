@@ -32,7 +32,7 @@ ds, eqs = ctmlm_setup(;
 # which can include arbitrary symbolic expressions or functions as per DynamicalSystems.jl.
 # See `playground_helpers.jl` for predefined options
 GUI_obs = :none
-GUI_obs = [:CTRC, :ΔF, :LHF, :CLT, :𝒟, :z_b]
+GUI_obs = [:CTRC, :ΔF, :LHF, :RCT, :𝒟, :z_b]
 # The `GUI_par` can only be a vector of symbols each representing a system parameter
 GUI_par = [:U, :D, :δ_Δ₊T, :q_x_rate, :RH₊, :CO2]
 

@@ -14,7 +14,10 @@ JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 MakieForProjects = "24dc64cf-9d0d-406f-af0b-13a4c1186bb2"
 ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
+OrdinaryDiffEqTsit5 = "b1df2697-797e-41e3-8120-5422d3b24e4a"
 PkgCite = "50d0efc5-baaf-4329-a409-faca2d9bd902"
+ProcessBasedModelling = "ca969041-2cf3-4b10-bc21-86f4417093eb"
+ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
 Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 
 [compat]

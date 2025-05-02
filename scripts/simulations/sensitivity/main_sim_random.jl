@@ -1,8 +1,8 @@
 # Script for running SCTEBM simulations given some input parameter distributions
 # and potential model aspects.
-# It outputs a bunch of information regarding the system attractors,
+# It saves to disk and plots a bunch of information regarding the system attractors,
 # basin fractions, global stability, as well as recording a bunch of observables.
-# You can run this with or without CO2: simply comment out the CO2 distribution
+# You can run this with or without CO2 variability: simply comment out the CO2 distribution
 # in the parameters and the CO2-related aspects in the `dict_list` call.
 # To run only a specific combination just call the final line in the script with `single_input`
 using DrWatson
@@ -67,10 +67,10 @@ function run_sim(input)
         # multistability multiparameter keywords
         kw_analysis = (density = 5, extra = 2, N = 1000),
         # keywords for processing
-        # make plots true if you are running a single aspect
+        # make plots `true` if you are running a single aspect
         kw_process = (plot_rmi = true, plot_density = true, delete_files = true,),
     )
 end
 
-# run_sim(single_input) # uncomment for single variant
-map(input -> run_sim(input), many_inputs) # uncomment for multiple variants
+run_sim(single_input) # uncomment for single variant
+# map(input -> run_sim(input), many_inputs) # uncomment for multiple variants

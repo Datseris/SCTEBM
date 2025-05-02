@@ -8,6 +8,9 @@
 /plots
 /notebooks
 /_research
+# ingore these for local development:
+/src/ProcessBasedModelling
+/src/ConceptualClimateModels
 
 ################################################################################
 #                                    Julia                                     #

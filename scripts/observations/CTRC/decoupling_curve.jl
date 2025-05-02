@@ -59,21 +59,21 @@ fig
 LHF = ncread(file2, "mslhf")
 CBH = ncread(file2, "cbh")
 BLH = ncread(file2, "blh")
-CLT = @. clamp((BLH - CBH)/(BLH), 0, 1)
+RCT = @. clamp((BLH - CBH)/(BLH), 0, 1)
 D = ncread(file3, "d") ./ 1e-6 # large scale subsidence; use only positive!
 D₊ = D[Pre(At(1000))]
 RH_b = dropagg(mean, RH[Pre(Between(1000, 950))], Pre) # near surface average should be most accurate
 
 Tsfc = ncread(file2, "t2m")
 
-𝒟 = @. CLT*LHF/CTRC
+𝒟 = @. RCT*LHF/CTRC
 
-idxs = findall(x -> ismissing(x) || x==0, CLT)
+idxs = findall(x -> ismissing(x) || x==0, RCT)
 
-fig, ax = density(vec(collect(skipmissing(CLT))); label = "CLT: CBH")
+fig, ax = density(vec(collect(skipmissing(RCT))); label = "RCT: CBH")
 density!(vec(collect(skipmissing(CLT2))); label = "CLT2: LCL")
 axislegend(ax)
-ax.title = "Which definition for CLT to use...?"
+ax.title = "Which definition for RCT to use...?"
 # wsave(plotsdir("ctbbl", "observations", "CTRC_ZhengGRL_whichCLT_$region.png"), fig)
 
 display(fig)
@@ -120,14 +120,14 @@ end
 
 for (j, acc) in enumerate(accesses)
     # access data in appropriate timeframe
-    clt = acc(CLT)
+    clt = acc(RCT)
     ctrc = acc(CTRC)
     lhf = acc(LHF)
     cf = acc(CFZheng)
     cf2 = acc(LCC)
     d = acc(D₊)
 
-    # the CLT, as estimated by ERA5, has countless 0 entries.
+    # the RCT, as estimated by ERA5, has countless 0 entries.
     # We remove them for now by skipping the 0 entries of 𝒟
     # Clean missing/incorrect data
     if 𝒟version == "Bretherton1997"

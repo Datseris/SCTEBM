@@ -58,10 +58,10 @@ function obtain_GUI_obs(GUI_obs)
         CLTRomps(u) = observe_state(ds, cltRomps(CTMLM.s_b, CTMLM.q_b, CTMLM.z_b), u)
         observables = [:z_b, w_e╱D, CLTex, CLTBolton, CLTRomps]
     elseif GUI_obs == :clouds
-        observables = [:C, :𝒟, :CTRC, :LHF, :CLT]
+        observables = [:C, :𝒟, :CTRC, :LHF, :RCT]
     elseif GUI_obs == :ctrc
         # ΔLss(u) = observe_state(ds, CTMLM.C*0.9*CTMLM.σ_SB*(CTMLM.T_t^4 - CTMLM.T_FTR^4), u)
-        observables = [:CTRC, :L_c, :L_FTR, :ε_FTR, :ε_c]
+        observables = [:CTRC, :L_c, :L_FTR, :ε_FTR, :ε_C]
     elseif GUI_obs == :emissivity
         logq_b(u) = log(observe_state(ds, :q_b, u))
         logq₊(u) = log(observe_state(ds, :q₊, u))
@@ -79,7 +79,7 @@ function obtain_GUI_obs(GUI_obs)
         RH_b = CTMLM.q_b/CTMLM.q₀
         Δs(u) = ((sp, s0) = observe_state.(ds, (:s₊, :s₀), Ref(u)); sp - s0)
         Δq(u) = ((sp, s0) = observe_state.(ds, (:q₊, :q₀), Ref(u)); sp - s0)
-        observables = [:z_b, :CLT, :q_b, :s_b, RH_b]
+        observables = [:z_b, :RCT, :q_b, :s_b, RH_b]
     end
     return observables
 end

@@ -37,7 +37,7 @@ function ctmlm_setup(;
         # Cloud equations
         CTMLM.cf_dynamic(cdversion),
         CTMLM.decoupling_variable(),
-        CTMLM.cloud_layer_thickness(:Bolton1980),
+        CTMLM.cloud_base_height(:Bolton1980),
         # Boundary layer
         CTMLM.sst_dynamic(),
         CTMLM.mlm_dynamic(),
@@ -95,7 +95,7 @@ function ctmlm_setup(;
     end
 
     # cloud radiation
-    append!(eqs, CTMLM.cloud_albedo())
+    push!(eqs, CTMLM.cloud_albedo())
 
     append!(eqs, extra_eqs)
 
@@ -118,7 +118,6 @@ function ctmlm_setup(;
     set_parameter!(ds, :q_x_rate, 2.0)
     set_parameter!(ds, :s_x_0, 0.2)
     set_parameter!(ds, :T_FTR_0, 288.0) # this is the tropical TFTR in the paper
-    set_parameter!(ds, :α_C, 0.4)
 
     for (p, val) in starting_parameters
         set_parameter!(ds, p, val)

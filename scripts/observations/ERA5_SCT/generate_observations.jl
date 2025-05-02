@@ -51,8 +51,8 @@ EIS = estimated_inversion_strength(Tsfc, T[Pre(At(700))], T[Pre(At(850))]; RH = 
 LCL = lifting_condensation_level(Tsfc, RH_b)
 CBH = ncread(file2, "cbh")
 
-CLT = @. clamp((BLH - CBH)/(BLH), 0, 1)
-# CLT = @. clamp((BLH - LCL)/(BLH), 0, 1)
+RCT = @. clamp((BLH - CBH)/(BLH), 0, 1)
+# RCT = @. clamp((BLH - LCL)/(BLH), 0, 1)
 
 # We modify this so that it also has liquid water
 Q = (ncread(file3, "q") .+ ncread(file3, "clwc")) .* 1000
@@ -123,7 +123,7 @@ inputs = @dict D EIS RH₊ U T_FTR c_d α_a α_c S
 outputs = OrderedDict(
     :C => C, :SST => SST, :q_b => q_b, :BLH => BLH,
     :CTRC => CTRC, :Ld => Ld, :Lnet => Lnet, :LHF => LHF,
-    :CLT => CLT, :SHF=> SHF, :T₊ => T₊, :ASW => ASW,
+    :RCT => RCT, :SHF=> SHF, :T₊ => T₊, :ASW => ASW,
 )
 
 # Finally we decide how to reduce the time dimension. For example:
@@ -142,7 +142,7 @@ outputs = OrderedDict(k => f(v) for (k, v) in outputs)
 oidxs = findall(m -> m < 0.2, M) # ocean indices
 # and also select points where there is subsidence
 didxs = findall(>(0), inputs[:D])
-# and also ignore points with 0 CLT
-cltidxs = findall(clt -> !ismissing(clt) && clt != 0, outputs[:CLT])
+# and also ignore points with 0 RCT
+cltidxs = findall(clt -> !ismissing(clt) && clt != 0, outputs[:RCT])
 # and combine everything
 invalid_idxs = intersect(didxs, oidxs, cltidxs)

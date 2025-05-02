@@ -24,7 +24,7 @@ starting_parameters = Dict(
 
 ds, eqs = ctmlm_setup(; input..., starting_parameters)
 
-obs = [:C, :SST, :q_b, :𝒟, :CTRC, :CLT, :LHF]
+obs = [:C, :SST, :q_b, :𝒟, :CTRC, :RCT, :LHF]
 
 X, t = trajectory(ds, 100.0; Δt = 0.01, save_idxs = obs, Ttr = 200.0)
 

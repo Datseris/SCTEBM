@@ -35,7 +35,7 @@ name = savename(input)*"_"*prefix
 data = wload(datadir(foldergroup..., name)*".jld2")
 @unpack continuations, param_values = data
 
-observables = [:LHF, :CLT, :CTRC, :𝒟, :C, :z_b]
+observables = [:LHF, :RCT, :CTRC, :𝒟, :C, :z_b]
 
 ids = 1:50
 
