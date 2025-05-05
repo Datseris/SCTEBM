@@ -5,7 +5,7 @@ using DynamicalSystems
 using ConceptualClimateModels
 using Statistics: mean
 using ProgressMeter
-include(srcdir("ctmlm_setups.jl"))
+include(srcdir("sctebm_setups.jl"))
 include(srcdir("theme.jl"))
 
 # setup simulation

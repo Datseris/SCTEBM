@@ -14,7 +14,7 @@ import Dates
 
 # include(srcdir("theme.jl"))
 include(srcdir("CloudToppedMixedLayerModel", "CloudToppedMixedLayerModel.jl"))
-include(srcdir("ctmlm_setups.jl"))
+include(srcdir("sctebm_setups.jl"))
 
 # This setup, with the parameters set below, results in a limit cycle
 w_m = true

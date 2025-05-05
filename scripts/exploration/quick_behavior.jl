@@ -4,7 +4,7 @@ using DrWatson
 @quickactivate
 using DynamicalSystems
 using Distributions
-include(srcdir("ctmlm_setups.jl"))
+include(srcdir("sctebm_setups.jl"))
 include(srcdir("simulations_process.jl"))
 
 input = Dict(

@@ -8,7 +8,7 @@ using ConceptualClimateModels
 using Statistics
 using Distributions
 using Statistics: mean
-include(srcdir("ctmlm_setups.jl"))
+include(srcdir("sctebm_setups.jl"))
 include(srcdir("simulations_run.jl"))
 include(srcdir("simulations_process.jl"))
 include(srcdir("theme.jl"))

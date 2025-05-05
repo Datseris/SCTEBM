@@ -12,7 +12,7 @@
 using DrWatson
 @quickactivate
 using DynamicalSystems
-include(srcdir("ctmlm_setups.jl"))
+include(srcdir("sctebm_setups.jl"))
 include("playground_helpers.jl")
 
 @parameters p = 5.0 e_m = 0.3 SST_X_0 = 0.0 q_x_rate = 2 β₋ = 0.3

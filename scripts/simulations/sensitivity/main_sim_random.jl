@@ -12,7 +12,7 @@ using ConceptualClimateModels
 using Statistics
 using Distributions
 include(srcdir("CloudToppedMixedLayerModel", "CloudToppedMixedLayerModel.jl"))
-include(srcdir("ctmlm_setups.jl"))
+include(srcdir("sctebm_setups.jl"))
 include(srcdir("simulations_run.jl"))
 include(srcdir("simulations_process.jl"))
 

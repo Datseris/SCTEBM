@@ -13,7 +13,7 @@ using DrWatson
 @quickactivate
 using DynamicalSystems
 using ConceptualClimateModels
-include(srcdir("ctmlm_setups.jl"))
+include(srcdir("sctebm_setups.jl"))
 include("playground_helpers.jl")
 
 ds, eqs = sctebm_setup(;
