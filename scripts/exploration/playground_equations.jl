@@ -1,6 +1,6 @@
 # Script for playing around with different equations and parameters for CTMLM
 # There are two ways to specify the model equations;
-# 1. use the `ctmlm_setup` function (this file) that makes same setups as in the paper
+# 1. use the `sctebm_setup` function (this file) that makes same setups as in the paper
 # 2. directly create your own equations (utilizing the default equations in defaults.jl),
 # which is in the file `playground_equations.jl`
 

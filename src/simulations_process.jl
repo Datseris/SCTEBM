@@ -225,7 +225,7 @@ function process_multiparam_multistability_analysis(input, params, foldergroup;
     println("and model configuration")
     display(input)
     # otherwise, perform the whole analysis
-    ebm, eqs = ctmlm_setup(; input..., starting_parameters)
+    ebm, eqs = sctebm_setup(; input..., starting_parameters)
     multiparameter_multistability_analysis(ebm, params;
         filename = savename(input), foldergroup, observables_to_obtain, kw_analysis...
     )

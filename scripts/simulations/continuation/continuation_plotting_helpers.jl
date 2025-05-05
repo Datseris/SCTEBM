@@ -75,7 +75,7 @@ function load_n_plot_continuation!(fig_loc, input, used, observables = [:C, :SST
     data = wload(datadir(foldergroup..., name)*".jld2")
     @unpack continuations, param_values = data
     # Create dynamical system (to observe states)
-    ds, eqs = ctmlm_setup(input)
+    ds, eqs = sctebm_setup(input)
 
     # TODO: make ds, make the function generic
 
@@ -106,7 +106,7 @@ function load_n_plot_continuation_only_c!(axc, input, used; add_collapse = true)
     prefix = "used="*join(string.(used), "+")
     name = savename(input)*"_"*prefix
     data = wload(datadir(foldergroup..., name)*".jld2")
-    ds, eqs = ctmlm_setup(input)
+    ds, eqs = sctebm_setup(input)
     @unpack continuations, only_Cu_time, no_Sc_time = data
     for (i, attractors_cont) in enumerate(continuations)
         plot_attractor_series!([axc], [:C], ds, attractors_cont)

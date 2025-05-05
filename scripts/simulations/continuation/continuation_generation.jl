@@ -58,7 +58,7 @@ for (p, t) in zip(pcurve, time)
 end
 
 # init stuff
-ebm, eqs = ctmlm_setup(input)
+ebm, eqs = sctebm_setup(input)
 
 collapse = fill(false, N)
 has_LC = fill(false, N)

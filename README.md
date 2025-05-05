@@ -45,7 +45,7 @@ to read those documentation pages first. The most relevant pages are:
 
 ## SCTEBM Variants
 
-The whole codebase revolves around the function `ctmlm_setup`
+The whole codebase revolves around the function `sctebm_setup`
 which you can find in the `src/ctmlm_setups.jl` file.
 The function takes as an input a dictionary, mapping model aspect
 to its option, and creates the SCTEBM variant while filling in all other

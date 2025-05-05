@@ -22,7 +22,7 @@ starting_parameters = Dict(
     :τ_C => 2.0, :τ_SST => 50.0
 )
 
-ds, eqs = ctmlm_setup(; input..., starting_parameters)
+ds, eqs = sctebm_setup(; input..., starting_parameters)
 
 obs = [:C, :SST, :q_b, :𝒟, :CTRC, :RCT, :LHF]
 

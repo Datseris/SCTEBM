@@ -1,4 +1,4 @@
-# Provide a central function `ctmlm_setup` that creates
+# Provide a central function `sctebm_setup` that creates
 # a dynamical system representing the SCTEBM. Create any variant by utilizing
 # keywords that map aspect to its options.
 
@@ -6,7 +6,7 @@ using ConceptualClimateModels
 import ConceptualClimateModels.CloudToppedMixedLayerModel as CTMLM
 
 """
-    ctmlm_setup(; aspect = option, ...) -> ds, eqs
+    sctebm_setup(; aspect = option, ...) -> ds, eqs
 
 Main function associated with the research article (Datseris 2025).
 Given an input of SCTEBM aspect options, create and return the resulting dynamical system
@@ -14,7 +14,7 @@ and equations (that were given to `processes_to_coupledodes`).
 The aspects are named slightly different from the Table 1 of the paper,
 so it is best to inspect the source code of the function for their names.
 """
-function ctmlm_setup(;
+function sctebm_setup(;
         dt = 0.05, diffeq = (adaptive = false, dt, verbose = false),
         extra_eqs = [], starting_parameters::Dict = Dict(),
         # The keywords are the aspects and their values are the options:
@@ -126,4 +126,4 @@ function ctmlm_setup(;
     return ds, eqs
 end
 
-ctmlm_setup(input; kw...) = ctmlm_setup(; kw..., input...)
+sctebm_setup(input; kw...) = sctebm_setup(; kw..., input...)

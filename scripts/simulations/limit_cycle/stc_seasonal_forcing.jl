@@ -56,7 +56,7 @@ end
 
 
 # %% case 1: just limit cycle
-ds, eqs = ctmlm_setup(input; starting_parameters)
+ds, eqs = sctebm_setup(input; starting_parameters)
 
 fig = plot_ds(ds, "limit cycle (no seasonal forcing)")
 
@@ -69,7 +69,7 @@ fig = plot_ds(ds, "limit cycle (no seasonal forcing)")
 extra_eqs = [
     CTMLM.S ~ ClimateBase.insolation(CTMLM.t, -28),
 ]
-ds, eqs = ctmlm_setup(input; starting_parameters, extra_eqs)
+ds, eqs = sctebm_setup(input; starting_parameters, extra_eqs)
 
 fig = plot_ds(ds, "seasonal forcing = on, bursting")
 
@@ -85,7 +85,7 @@ quasiperiodic_parameters = Dict(
     :τ_C => 1.95,
 )
 
-ds, eqs = ctmlm_setup(input; starting_parameters = chaos_parameters, extra_eqs)
+ds, eqs = sctebm_setup(input; starting_parameters = chaos_parameters, extra_eqs)
 λ = lyapunov(ds, 20000; Ttr = 100.0)
 λs = lyapunovspectrum(ds, 20000; Ttr = 100.0)
 λ1, λ2 = λs

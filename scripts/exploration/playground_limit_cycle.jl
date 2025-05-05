@@ -7,7 +7,7 @@ using ConceptualClimateModels
 include(srcdir("ctmlm_setups.jl"))
 include("playground_helpers.jl")
 
-ds, eqs = ctmlm_setup(;
+ds, eqs = sctebm_setup(;
     cooling = :q_x,
     Ld = :three_layer,
     ΔF = :three_layer,

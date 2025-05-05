@@ -55,7 +55,7 @@ input = @dict(cooling, cdversion, invfix, invdec, Ld, ΔF, entrain, ftrgrad)
 foldergroup = ["sims", "observed_params"]
 
 # The rest is the automated running code
-# Keep in mind that parameter fitting is done inside the `ctmlm_setup` function.
+# Keep in mind that parameter fitting is done inside the `sctebm_setup` function.
 process_multiparam_multistability_analysis(
     input, param_container, foldergroup; force = true,
     kw_analysis = (density = 5, extra = 2, N = 1000),
