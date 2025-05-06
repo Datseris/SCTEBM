@@ -27,6 +27,7 @@ function sctebm_setup(;
         cooling = :q_x,
         w_m = false,
         cdversion = :sigmoid,
+        cloud_rad = :const, # :const or :lwp
         ε_C = :fraction, T_c_version = :top,
         invdec = true, # enable decoupling augmentations with i𝒹
         fcrc = true, # fractional cloud radiative cooling, ∝ C
@@ -55,8 +56,7 @@ function sctebm_setup(;
         CTMLM.bbl_emission_temperature(),
 
         # Radiation
-        CTMLM.cloud_longwave_cooling(cloud_fraction = (ε_C ≠ :fraction && fcrc)),
-        CTMLM.cloud_emissivity(ε_C),
+        CTMLM.cloud_longwave_cooling(),
         CTMLM.cloud_shortwave_warming(:insolation; cloud_fraction = fcrc),
         CTMLM.mlm_radiative_cooling(ΔF),
         CTMLM.downwards_longwave_radiation(Ld),
@@ -94,8 +94,18 @@ function sctebm_setup(;
         ])
     end
 
-    # cloud radiation
-    push!(eqs, CTMLM.cloud_albedo())
+    # cloud radiation (always proportional to cloud fraction in the SCTEBM)
+    if cloud_rad == :const
+        append!(eqs, [
+            CTMLM.cloud_emissivity(1.0),
+            CTMLM.cloud_albedo(0.38),
+        ])
+    elseif cloud_rad == :lwp
+        append!(eqs, [
+            CTMLM.cloud_emissivity(:lwp),
+            CTMLM.cloud_albedo(:lwp),
+        ])
+    end
 
     append!(eqs, extra_eqs)
 

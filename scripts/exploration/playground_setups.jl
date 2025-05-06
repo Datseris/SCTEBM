@@ -25,6 +25,7 @@ ds, eqs = sctebm_setup(;
     invdec = true,
     entrain = :Stevens2006,
     ftrgrad = :none,
+    cloud_rad = :lwp,
 )
 
 # %% Configure and launch GUI
@@ -32,7 +33,8 @@ ds, eqs = sctebm_setup(;
 # which can include arbitrary symbolic expressions or functions as per DynamicalSystems.jl.
 # See `playground_helpers.jl` for predefined options
 GUI_obs = :none
-GUI_obs = [:CTRC, :ΔF, :LHF, :RCT, :𝒟, :z_b]
+# GUI_obs = [:CTRC, :LHF, :RCT, :𝒟, :α_C, :ε_C]
+GUI_obs = [:C, :SST, :α_C, :ε_C]
 # The `GUI_par` can only be a vector of symbols each representing a system parameter
 GUI_par = [:U, :D, :δ_Δ₊T, :q_x_rate, :RH₊, :CO2]
 
