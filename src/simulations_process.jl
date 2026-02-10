@@ -1,5 +1,6 @@
 include("theme.jl") # to enable plotting during processing
 include("simulations_run.jl") # calls most functions from here
+using DynamicalSystems
 
 function has_bottleneck(attractors, convergence)
     length(attractors) == 1 || return false # specific to my system: only if 1 attractor exists there is a bottleneck
@@ -14,18 +15,17 @@ end
 
 has_limitcycle(attractors) = any(A -> length(A) > 2, values(attractors))
 
-function has_fixedpoint(attractors, Cidx = 2, condition = x -> true)
+function has_fixedpoint(attractors, condition = x -> true)
     for A in values(attractors)
         length(A) > 4 && continue # skip limit cycles
-        condition(A[end][Cidx]) && return true
+        condition(A[length(A), :C]) && return true
     end
     return false
 end
 
-has_stratocumulus(attractors, Cidx = 2) = has_fixedpoint(attractors, Cidx, x -> x > 0.5)
-has_cumulus(attractors, Cidx = 2) = has_fixedpoint(attractors, Cidx, x -> x < 0.5)
+has_stratocumulus(attractors) = has_fixedpoint(attractors, x -> x > 0.5)
+has_cumulus(attractors) = has_fixedpoint(attractors, x -> x < 0.5)
 
-using DynamicalSystems
 entropy = DynamicalSystems.entropy
 using Random: shuffle!
 function rel_mut_info(x, y, bins = 20; trials = 10_000)
@@ -54,7 +54,7 @@ function multiparameter_multistability_process(input;
         foldergroup = ["sims", "random_params_sims"],
         parameters_to_obtain = [:U, :D, :RH₊, :δ_Δ₊T, :δ_FTR, :CO2],
         observables_to_obtain = [
-            :C, :SST, :q_b, :z_b, :s_b, :CTRC, :Ld, :Lnet, :LHF, :RCT, :SHF, :T₊, :ASW,
+            :C, :SST, :q_b, :z_b, :s_b, :CTRC, :Ld, :Lnet, :LHF, :RCT, :SHF, :T₊, :ASW, :LWP,
         ],
         delete_files = false, plot_density = true, plot_rmi = true, trials = 1000,
         save_plots = true,
@@ -106,11 +106,14 @@ function multiparameter_multistability_process(input;
     # (this allows to extract any other observable at the same quartiles)
     for dynvar in (:SST, :C, :z_b, :q_b, :s_b)
         !haskey(observables_values, dynvar) && continue
-        output["quartiles_$(dynvar)"] = quantile(observables_values[dynvar], [0.25, 0.5, 0.75])
+        output["quantiles_$(dynvar)"] = quantile(observables_values[dynvar], [0.1, 0.5, 0.9])
     end
 
     # densities
     plot_density && plot_densities(input, observables_values, foldergroup, save_plots)
+    if save_distributions
+        output["observables_distributions"] = observables_values
+    end
 
     # mutual infos
     if estimate_rmi
@@ -191,10 +194,6 @@ function plot_rmi_scatters(input, observables_values, parameters_values, xMI, yM
             ax = axs[j, i]
             scatter!(ax, x, y; kw...)
             textbox!(ax, string(round(rmi; sigdigits = 2)))
-            # Store result in the `output`
-            if xname == :δ_FTR
-                ax.xticks = [282, 287, 292]
-            end
         end
     end
 
@@ -214,6 +213,7 @@ function process_multiparam_multistability_analysis(input, params, foldergroup;
             :C, :SST, :q_b, :z_b, :s_b, :CTRC, :Ld, :Lnet, :LHF, :RCT, :SHF, :T₊, :ASW
         ],
         kw_process = NamedTuple(), kw_analysis = NamedTuple(),
+        save_distributions = false,
     )
     # skip if the whole simulation has been performed already
     outfile = datadir(foldergroup..., savename(input, "jld2"))
@@ -232,42 +232,7 @@ function process_multiparam_multistability_analysis(input, params, foldergroup;
     # then aggregate the individual parameter conbimation simulations
     # into a single file and delete the individual files
     output = multiparameter_multistability_process(input;
-        foldergroup, delete_files, observables_to_obtain, kw_process...
+        foldergroup, delete_files, observables_to_obtain, save_distributions, kw_process...
     )
     return output
-end
-
-# Make sure the aspects ordering is like in the paper table
-# and make sure all match the options!
-const ASPECTS_OPTIONS = OrderedDict(
-    "ftrgrad" => [:none, :weak, :strong],
-    "invfix" => [:difference, :temperature],
-    "co2" => [1, 2, 3],
-    "ΔF" => [:ctrc, :three_layer, :Gesso2014],
-    "Ld" => [:three_layer, :fixed],
-    "entrain" => [:Stevens2006, :Gesso2014],
-)
-
-"""
-    aspects_to_option_idx(row)
-
-Given a `DataFrame` row, or in general a named tuple
-mapping aspects to their options, return the integer
-(1, 2, 3) corresponding to that option
-"""
-function aspects_to_option_idx(row)
-    idxs = zeros(Int, length(ASPECTS_OPTIONS))
-    # Ensure there is an informative error if any of these is nothing
-    for i in eachindex(idxs)
-        aspect, options = collect(ASPECTS_OPTIONS)[i]
-        idx = findfirst(isequal(row[aspect]), options)
-        if isnothing(idx)
-            @show row[aspect] options
-            error("index nothing")
-        end
-        idxs[i] = idx
-    end
-    # Same but in a one liner:
-    # [findfirst(isequal(row[aspect]), options) for (aspect, options) in pairs(aspects)]
-    return idxs
 end

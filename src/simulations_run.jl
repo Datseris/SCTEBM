@@ -1,8 +1,12 @@
 using DynamicalSystems, ProgressMeter, Distributions
 
-function random_initial_conditions(density::Int, extra::Int = 5)
+function random_initial_conditions(density::Int = 5, extra::Int = 5)
     Cgrid = range(0, 1; length = density)
     Tgrid = range(270, 310; length = density)
+    random_initial_conditions(Cgrid, Tgrid, extra)
+end
+
+function random_initial_conditions(Cgrid::AbstractVector, Tgrid::AbstractVector, extra)
     ics = Dict{Symbol, Float64}[]
     for C in Cgrid, T in Tgrid
         for _ in 1:extra # add some small variability to each IC
@@ -28,14 +32,19 @@ function sample_parameters!(ds, distributions::Dict{<:Any, <:Distribution}, i)
     return ds
 end
 function sample_parameters!(ds, params::Vector{<:Dict}, i)
-    set_parameters!(ds, params[i])
+    p = params[i]
+    if any(ismissing, values(p))
+        @show p
+        error("missing")
+    end
+    set_parameters!(ds, p)
     return ds
 end
 
 folders_from_params(::Dict{<:Any, <:Distribution}) = ["random_params_sims",]
 folders_from_params(::Vector{<:Dict}) = ["observed_params_sims",]
 
-function multistability_analysis(ds::DynamicalSystem, ics; kw...)
+function multistability_analysis(ds::DynamicalSystem, ics = random_initial_conditions(); kw...)
     mapper = recurrences_mapper_ctbbl(ds)
     # this try-catch block ignores parameter values with huge stickiness
     # (right after bifurcation) that requires much larger recurrences thresholds.
@@ -59,7 +68,14 @@ function recurrences_mapper_ctbbl(ds; kw...)
     # attractors in the full 5 dimensional space, so we might as well leave it as is.
     Cgrid = range(0, 1; length = 151)
     Tgrid = range(270, 310; length = 151)
-    grid = (Tgrid, Cgrid, (0.0:4000:4000), (250.0:100:350), (1.0:50:60),)
+    ranges = Dict(
+        :C => Cgrid, :SST => Tgrid, :q_b => (1.0:50:60),
+        :z_b => (0.0:4000:4000), :s_b => (250.0:100:350),
+    )
+    # Here we make sure the grid is correct regardless of what the order of
+    # state variables is!
+    named_states = named_variables(ds)
+    grid = Tuple([ranges[x] for x in named_states])
 
     mapper = AttractorsViaRecurrences(ds, grid;
         sparse = true, consecutive_lost_steps = 100,
@@ -83,11 +99,9 @@ function continuation_analysis(ds, pcurve; show_progress = false, density = 11, 
         if length(A) != length(B) && any(isequal(1), length.((A, B)))
             return Inf
         end
-        # otherwise we need a weighted euclidean distance
-        # note the weights assume a fixed ordering of the state variables
-        # as I haven't implemented yet a named column syntax to the state space set!
-        weights = (300.0, 1.0, 1200.0, 300.0, 10.0)
-        d = maximum(i -> abs( ( mean(A[:, i]) - mean(B[:, i]) )/weights[i] ), 1:5)
+        # otherwise we need a weighted euclidean distance (each variable has different scale)
+        weights = Dict(:s_b => 300.0, :C => 1.0, :z_b => 1200.0, :SST => 300.0, :q_b => 10.0)
+        d = maximum(i -> abs((mean(A[:, i]) - mean(B[:, i]))/weights[i]), keys(weights))
         return d
     end
 
@@ -117,7 +131,6 @@ function multiparameter_multistability_analysis(
     paramsampler isa Vector && (N = length(paramsampler))
 
     @showprogress desc="Computing..." Threads.@threads for _prog in 1:N # run many simulations!
-    # for _prog in 1:N # run many simulations!
 
         ds = dss[Threads.threadid()]
         # Step 2: decide the input parameters based on input distributions
@@ -130,7 +143,7 @@ function multiparameter_multistability_analysis(
         # Step 4: multistability analysis
         fractions, labels, convergence, attractors = multistability_analysis(ds, ics)
 
-        # Step 5: obtain all observables to save; save equations is probably too complex
+        # Step 5: obtain all observables to save; saving equations is probably too complex
         observables = extract_observables(ds, attractors, observables_to_obtain, keep_mean)
 
         # Step 6: save output; but be conservative
@@ -153,10 +166,13 @@ using Statistics: mean
 function extract_observables(ds::DynamicalSystem, attractors::Dict, observables, keep_mean = true)
     observables_values = Dict(Symbol(k) => Float64[] for k in observables)
     for A in values(attractors)
-        # first, select the points
+        # first, select the state space points to extract the observables at
         if length(A) < 4
             us = A
         else # limit cycle; get states of max SST, max C, and overall mean
+            # TODO:
+            # what if the order of the `ds` state and the order of variables in `A`
+            # are not the same...?!?!
             Cs = observe_state.(Ref(ds), :C, vec(A))
             SSTs = observe_state.(Ref(ds), :SST, vec(A))
             j1 = argmin(Cs)
@@ -174,4 +190,9 @@ function extract_observables(ds::DynamicalSystem, attractors::Dict, observables,
         end
     end
     return observables_values
+end
+
+function ensure_same_order()
+
+
 end
