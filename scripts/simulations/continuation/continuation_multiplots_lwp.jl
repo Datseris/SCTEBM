@@ -10,17 +10,19 @@ include("continuation_plotting_helpers.jl")
 
 # Inputs to visualize:
 cooling = :q_x
-invfix = :difference
+invfix = :temperature
 Ld = :three_layer # top bottom may be nonsensical; I should study it in the GUI
-ΔF = :Gesso2014
+ΔF_s = :three_layer
 co2 = 2
+cloud_rad = :lwp
 entrain = :Stevens2006
 ftrgrad = :none
-input = @dict(cooling, invfix, Ld, ΔF, co2, entrain, ftrgrad)
+input = @dict(cooling, invfix, Ld, ΔF_s, co2, entrain, ftrgrad, cloud_rad)
 
 # prepare all columns and rows of the multiplot
-ΔFs = [:ctrc, :three_layer, :Gesso2014]
-all_input = [(x = copy(input); x[:ΔF] = df; x) for df in ΔFs]
+ΔFs = [:ctrc, :three_layer]
+
+all_input = [(x = copy(input); x[:ΔF_s] = df; x) for df in ΔFs]
 all_used = sort.([[:CO2], [:D], [:D, :CO2], [:D, :CO2, :U]])
 titles = map(used -> join(string.(used), ", "), all_used)
 
@@ -32,7 +34,7 @@ titles = map(used -> join(string.(used), ", "), all_used)
 
 # and this is how you plot all of them!
 fig, axs = axesgrid(length(all_input), length(all_used);
-    size = (figwidth, figheight*2.5), titles, xlabels = "time (a. u)",
+    size = (figwidth, figheight*length(all_input)), titles, xlabels = "time (a. u)",
     ylabels = ["ΔFₛ option = $(i)\nC" for i in 1:3],
     sharex = true, sharey = true,
 )
@@ -45,14 +47,8 @@ for (i, input) in enumerate(all_input)
 end
 
 # add legend
-state_names = sort(collect(keys(state_colors)))
-elements = [
-   [LineElement(color = state_colors[k][][1]),
-    MarkerElement(color = state_colors[k][][1], marker = state_markers[k], markersize = 25)]
-    for k in state_names
-]
-
-Legend(fig[2, 5], elements, state_names)
+cloud_transition_legend!(fig[:, length(all_used)+1])
+ft = figuretitle!(fig, L"Cloud radiation scheme option 2: $\alpha_C, \varepsilon_C \;\propto\; C$ and LWP")
 
 display(fig)
-# wsave(papersdir("figures", "continuations"), fig)
+wsave(papersdir("figures", "continuations_rad2"), fig)

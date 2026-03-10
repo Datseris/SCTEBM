@@ -9,6 +9,7 @@ using Statistics
 using CairoMakie; CairoMakie.activate!()
 include(srcdir("theme.jl"))
 include(srcdir("observations_analysis.jl"))
+Pre = ClimateBase.Pre
 
 year = 2014
 region = "Namibia"
@@ -51,14 +52,14 @@ EIS = estimated_inversion_strength(Tsfc, T[Pre(At(700))], T[Pre(At(850))]; RH = 
 LCL = lifting_condensation_level(Tsfc, RH_b)
 CBH = ncread(file2, "cbh")
 
-CLT = @. clamp((BLH - CBH)/(BLH), 0, 1)
-# CLT = @. clamp((BLH - LCL)/(BLH), 0, 1)
+RCT = @. clamp((BLH - CBH)/(BLH), 0, 1)
+RCT2 = @. clamp((BLH - LCL)/(BLH), 0, 1)
 
 # We modify this so that it also has liquid water
 Q = (ncread(file3, "q") .+ ncread(file3, "clwc")) .* 1000
 q_b = dropagg(mean, Q[Pre(Between(1000, 950))], Pre)
 
-# From LHF, moisture and surface temperature, I can estimate the c_d coefficient
+# From LHF, moisture and surface temperature, I can estimate the d_c coefficient
 # q_saturation from Stevens 2006.
 function q_saturation(T)
     ℓ_v = 2.53e6 # latent heat of vaporization (J/gr) # notice the gram units! coz we use `q` in gr/kg!
@@ -71,7 +72,7 @@ function q_saturation(T)
 end
 q₀ = q_saturation.(SST)
 
-c_d = LHF ./ (q₀ - q_b) / (2.53e3) / 1.2 ./ U # constant density
+d_c = LHF ./ (q₀ - q_b) / (2.53e3) / 1.2 ./ U # constant density
 
 # longwave
 Ld = ncread(file2, "msdwlwrf")
@@ -119,11 +120,11 @@ CTRC = - CTRC .* CFZheng # - because we want it positive definite
 ASW = F_s_net # Absorbed
 
 # I am not plotting a_s, TI, z_+, as I do not use them anywhere
-inputs = @dict D EIS RH₊ U T_FTR c_d α_a α_c S
+inputs = @dict D EIS RH₊ U T_FTR d_c α_a α_c S
 outputs = OrderedDict(
     :C => C, :SST => SST, :q_b => q_b, :BLH => BLH,
     :CTRC => CTRC, :Ld => Ld, :Lnet => Lnet, :LHF => LHF,
-    :CLT => CLT, :SHF=> SHF, :T₊ => T₊, :ASW => ASW,
+    :RCT => RCT, :SHF=> SHF, :T₊ => T₊, :ASW => ASW,
 )
 
 # Finally we decide how to reduce the time dimension. For example:
@@ -142,7 +143,7 @@ outputs = OrderedDict(k => f(v) for (k, v) in outputs)
 oidxs = findall(m -> m < 0.2, M) # ocean indices
 # and also select points where there is subsidence
 didxs = findall(>(0), inputs[:D])
-# and also ignore points with 0 CLT
-cltidxs = findall(clt -> !ismissing(clt) && clt != 0, outputs[:CLT])
+# and also ignore points with 0 RCT
+cltidxs = findall(clt -> !ismissing(clt) && clt != 0, outputs[:RCT])
 # and combine everything
-invalid_idxs = intersect(didxs, oidxs, cltidxs)
+valid_idxs = intersect(didxs, oidxs, cltidxs)

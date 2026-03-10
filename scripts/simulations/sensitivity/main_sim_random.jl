@@ -1,20 +1,20 @@
 # Script for running SCTEBM simulations given some input parameter distributions
 # and potential model aspects.
-# It outputs a bunch of information regarding the system attractors,
+# It saves to disk and plots a bunch of information regarding the system attractors,
 # basin fractions, global stability, as well as recording a bunch of observables.
-# You can run this with or without CO2: simply comment out the CO2 distribution
+# You can run this with or without CO2 variability: simply comment out the CO2 distribution
 # in the parameters and the CO2-related aspects in the `dict_list` call.
 # To run only a specific combination just call the final line in the script with `single_input`
+
 using DrWatson
 @quickactivate
 using DynamicalSystems
 using ConceptualClimateModels
 using Statistics
 using Distributions
-include(srcdir("CloudToppedMixedLayerModel", "CloudToppedMixedLayerModel.jl"))
-include(srcdir("ctmlm_setups.jl"))
-include(srcdir("simulations_run.jl"))
+include(srcdir("sctebm_setups.jl"))
 include(srcdir("simulations_process.jl"))
+include(srcdir("aspects_definition.jl"))
 
 ###########################################################################################
 # Inputs
@@ -29,19 +29,25 @@ single_input = Dict(
     :invfix => :difference,
     :ftrgrad => :weak,
     :Ld => :three_layer,
-    :ΔF => :ctrc,
+    :ΔF_s => :ctrc,
+    :cloud_rad => :const,
 )
 
 # this is used for multiple variants
 many_inputs = dict_list(Dict(
     :cooling => :q_x,
-    :ftrgrad => :weak,
-    :entrain => :Gesso2014,
+    :ftrgrad => [:none, ],
+    :entrain => [:Stevens2006, :Gesso2014],
     :Ld => [:three_layer, :fixed],
-    :ΔF => [:Gesso2014],
+    :ΔF_s => [ :three_layer],
     :invfix => [:difference, :temperature],
     :co2 => [1, 2, 3],
+    :cloud_rad => [:const,],
 ))
+shuffle!(many_inputs)
+
+# all possible variants are given by
+all_inputs = dict_list(ASPECTS_OPTIONS)
 
 # Input 2: distributions of parameters
 # It's a dictionary mapping named parameters (symbols) to distributions
@@ -67,7 +73,7 @@ function run_sim(input)
         # multistability multiparameter keywords
         kw_analysis = (density = 5, extra = 2, N = 1000),
         # keywords for processing
-        # make plots true if you are running a single aspect
+        # make plots `true` if you are running a single aspect
         kw_process = (plot_rmi = true, plot_density = true, delete_files = true,),
     )
 end

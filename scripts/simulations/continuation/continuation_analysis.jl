@@ -11,7 +11,7 @@ using ConceptualClimateModels
 using Statistics
 using Distributions
 using Statistics: mean
-include(srcdir("ctmlm_setups.jl"))
+include(srcdir("sctebm_setups.jl"))
 include(srcdir("simulations_process.jl"))
 include(srcdir("theme.jl"))
 include("continuation_plotting_helpers.jl")
@@ -19,15 +19,16 @@ TRANSPARENCY[] = 0.25
 
 # Inputs to visualize:
 cooling = :q_x
-invfix = :difference
-Ld = :three_layer # top bottom may be nonsensical; I should study it in the GUI
-ΔF = :three_layer
+invfix = :temperature
+Ld = :three_layer
+ΔF_s = :ctrc
 co2 = 2
+cloud_rad = :lwp
 entrain = :Stevens2006
 ftrgrad = :none
-input = @dict(cooling, invfix, Ld, ΔF, co2, entrain, ftrgrad)
+input = @dict(cooling, invfix, Ld, ΔF_s, co2, entrain, ftrgrad, cloud_rad)
 
-used = sort([:CO2]) # always sort this!!!
+used = sort([:D, :CO2]) # always sort this!!!
 
 foldergroup = ["sims", "continuations"]
 prefix = "used="*join(string.(used), "+")
@@ -35,14 +36,22 @@ name = savename(input)*"_"*prefix
 data = wload(datadir(foldergroup..., name)*".jld2")
 @unpack continuations, param_values = data
 
-observables = [:LHF, :CLT, :CTRC, :𝒟, :C, :z_b]
+# observables = [:LHF, :RCT, :CTRC, :Λ, :C, :z_b]
+observables = [:SST, :C]
 
-ids = 1:50
+ids = 1:10
 
 # plotsy plotsy
 fig = Figure(size = (figwidth/2, 2figheight))
 axs = load_n_plot_continuation!(fig, input, used, observables; ids)
-ylims!(axs[4], 0, 8)
+# ylims!(axs[4], 0, 8)
+resize!(fig, 600, 400)
 display(fig)
 
 # wsave(papersdir("figures", "continuation_analysis"), fig)
+# %%
+fig = Figure(size = (figwidth/2, figheight))
+ax = Axis(fig[1,1])
+load_n_plot_continuation_only_c!(ax, input, used)
+figuretitle!(fig, string(used))
+fig

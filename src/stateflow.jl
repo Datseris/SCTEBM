@@ -1,14 +1,3 @@
-# function nullclines_observable!(ax::Axis, dsobs::DynamicalSystemObservable; kw...)
-#     ds = dsobs.ds # find the correct non-parallel ds version
-#     xlim, ylim = physically_plausible_limits(dsobs.ds) # get correct reference
-#     ux, uy = nullclines!(ax, ds, xlim, ylim; kw...)
-#     on(dsobs.param_observable) do params
-#         nullclines!(ux[], uy[], ds, limits[1], limits[2])
-#         notify.((ux, uy))
-#     end
-#     return ux, uy
-# end
-
 """
     nullclines!(ax::Axis, ds::DynamicalSystem, xlim, ylim;
         n = 1000, nx = n, ny = n, xkw = NamedTuple(), ykw = NamedTuple(),

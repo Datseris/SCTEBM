@@ -58,16 +58,16 @@ function obtain_GUI_obs(GUI_obs)
         CLTRomps(u) = observe_state(ds, cltRomps(CTMLM.s_b, CTMLM.q_b, CTMLM.z_b), u)
         observables = [:z_b, w_e╱D, CLTex, CLTBolton, CLTRomps]
     elseif GUI_obs == :clouds
-        observables = [:C, :𝒟, :CTRC, :LHF, :CLT]
+        observables = [:C, :Λ, :CTRC, :LHF, :RCT]
     elseif GUI_obs == :ctrc
         # ΔLss(u) = observe_state(ds, CTMLM.C*0.9*CTMLM.σ_SB*(CTMLM.T_t^4 - CTMLM.T_FTR^4), u)
-        observables = [:CTRC, :L_c, :L_FTR, :ε_FTR, :ε_c]
+        observables = [:CTRC, :L_c, :L_FTR, :ε_FTR, :ε_C]
     elseif GUI_obs == :emissivity
         logq_b(u) = log(observe_state(ds, :q_b, u))
         logq₊(u) = log(observe_state(ds, :q₊, u))
         observables = [:C, :ε_b, :ε_FTR]
     elseif GUI_obs == :radiation
-        observables = [:ASW, :L_FTR, :Ld, :Lnet, :CTRC, :ΔF]
+        observables = [:ASW, :L_FTR, :Ld, :Lnet, :CTRC, :ΔF_s]
     elseif GUI_obs == :temperature
         observables = [:SST, :T_b, :T_t, :T₊, :T_FTR]
     elseif GUI_obs == :inversion
@@ -79,7 +79,7 @@ function obtain_GUI_obs(GUI_obs)
         RH_b = CTMLM.q_b/CTMLM.q₀
         Δs(u) = ((sp, s0) = observe_state.(ds, (:s₊, :s₀), Ref(u)); sp - s0)
         Δq(u) = ((sp, s0) = observe_state.(ds, (:q₊, :q₀), Ref(u)); sp - s0)
-        observables = [:z_b, :CLT, :q_b, :s_b, RH_b]
+        observables = [:z_b, :RCT, :q_b, :s_b, RH_b]
     end
     return observables
 end
@@ -107,16 +107,18 @@ allparams = OrderedDict(
     :ρ => (0.8:0.01:2.0),
     # Clouds:
     :α_C => (0:0.01:1),
-    :α_a => (0:0.01:1),
     :ε_C => (0:0.01:1),
+    :g_C => (0:0.01:1),
+    :α_C_max => (0:0.01:1),
+    :α_a => (0:0.01:1),
     :Cmin => (0:0.01:1),
     :Cmax => (0:0.01:1),
-    :𝒟s => (0:0.01:1),
+    :Λs => (0:0.01:1),
     # Velocity efficiencies:
     :e_e => 0.0:0.01:3.0,
     :e_v => 0:0.01:2.0,
     :e_m => -2:0.01:2.0,
-    :c_d => 0.0005:0.00001:0.0015,
+    :d_c => 0.0005:0.00001:0.0015,
     # Free troposphere:
     :ECS_CO2 => (0.0:0.01:10),
     :Δ₊T_C => (0.0:0.01:10),

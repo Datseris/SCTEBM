@@ -8,7 +8,7 @@ using ConceptualClimateModels
 using Statistics
 using Distributions
 using Statistics: mean
-include(srcdir("ctmlm_setups.jl"))
+include(srcdir("sctebm_setups.jl"))
 include(srcdir("simulations_run.jl"))
 include(srcdir("simulations_process.jl"))
 include(srcdir("theme.jl"))
@@ -20,12 +20,13 @@ using ProgressMeter
 # Input 1: equations configuration
 cooling = :q_x
 invfix = :temperature
-Ld = :three_layer # top bottom may be nonsensical; I should study it in the GUI
-ΔF = :ctrc
+Ld = :three_layer
+ΔF_s = :ctrc
 co2 = 2
+cloud_rad = :lwp
 entrain = :Stevens2006
 ftrgrad = :none
-input = @dict(cooling, invfix, Ld, ΔF, co2, entrain, ftrgrad)
+input = @dict(cooling, invfix, Ld, ΔF_s, co2, entrain, ftrgrad, cloud_rad)
 
 # Input 2: distributions of parameters
 # It's a dictionary mapping named parameters (symbols) to distributions
@@ -40,10 +41,10 @@ distributions = Dict(
 # Input 3: change of environmental conditions with "time"
 time = 0:14
 rates = Dict(:CO2 => 100, :D => -0.1e-6, :U => -0.2)
-starts = Dict(:CO2 => 400, :D => 3e-6, :U => 8.0)
+starts = Dict(:CO2 => 400, :D => 3e-6, :U => 7.0)
 
 # Input 4: which environmental conditions will change with time
-used = sort([:CO2]) # always sort this!!!
+used = sort!([:CO2, :U, :D]) # always sort this!!!
 N = 100 # number of randomized param simulations
 
 ###########################################################################################
@@ -58,7 +59,7 @@ for (p, t) in zip(pcurve, time)
 end
 
 # init stuff
-ebm, eqs = ctmlm_setup(input)
+ebm, eqs = sctebm_setup(input)
 
 collapse = fill(false, N)
 has_LC = fill(false, N)

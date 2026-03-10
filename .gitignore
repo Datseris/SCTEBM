@@ -1,3 +1,4 @@
+*.png
 ################################################################################
 #                          DrWatson Project Structure                          #
 ################################################################################
@@ -8,6 +9,11 @@
 /plots
 /notebooks
 /_research
+/documents
+/testing
+# ingore these for local development:
+/src/ProcessBasedModelling
+/src/ConceptualClimateModels
 
 ################################################################################
 #                                    Julia                                     #

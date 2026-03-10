@@ -59,21 +59,20 @@ fig
 LHF = ncread(file2, "mslhf")
 CBH = ncread(file2, "cbh")
 BLH = ncread(file2, "blh")
-CLT = @. clamp((BLH - CBH)/(BLH), 0, 1)
+RCT = @. clamp((BLH - CBH)/(BLH), 0, 1)
 D = ncread(file3, "d") ./ 1e-6 # large scale subsidence; use only positive!
 D₊ = D[Pre(At(1000))]
 RH_b = dropagg(mean, RH[Pre(Between(1000, 950))], Pre) # near surface average should be most accurate
 
 Tsfc = ncread(file2, "t2m")
 
-𝒟 = @. CLT*LHF/CTRC
 
-idxs = findall(x -> ismissing(x) || x==0, CLT)
+idxs = findall(x -> ismissing(x) || x==0, RCT)
 
-fig, ax = density(vec(collect(skipmissing(CLT))); label = "CLT: CBH")
-density!(vec(collect(skipmissing(CLT2))); label = "CLT2: LCL")
+fig, ax = density(vec(collect(skipmissing(RCT))); label = "RCT: CBH")
+density!(vec(collect(skipmissing(RCT2))); label = "RCT2: LCL")
 axislegend(ax)
-ax.title = "Which definition for CLT to use...?"
+ax.title = "Which definition for RCT to use...?"
 # wsave(plotsdir("ctbbl", "observations", "CTRC_ZhengGRL_whichCLT_$region.png"), fig)
 
 display(fig)
@@ -82,7 +81,7 @@ display(fig)
 # %%
 
 fig, axs = axesgrid(1, 3;
-    size = (1000, 400), xlabels = "𝒟",
+    size = (3figwidth/4, figheight), xlabels = L"\Lambda",
     ylabels = ["C"], sharey = true, sharex = true,
     titles = ("All months", "Summer", "Winter")
 )
@@ -94,8 +93,8 @@ accesses = [
     X -> X[Tim(DimensionalData.Where(t -> month(t) ∈ 6:8))],
 ]
 
-𝒟version = "Bretherton1997"
-# 𝒟version = "Chung2012"
+Λversion = "Bretherton1997"
+# Λversion = "Chung2012"
 
 CLTversion = "CBH"
 
@@ -120,41 +119,43 @@ end
 
 for (j, acc) in enumerate(accesses)
     # access data in appropriate timeframe
-    clt = acc(CLT)
+    clt = acc(RCT)
     ctrc = acc(CTRC)
     lhf = acc(LHF)
     cf = acc(CFZheng)
     cf2 = acc(LCC)
     d = acc(D₊)
 
-    # the CLT, as estimated by ERA5, has countless 0 entries.
-    # We remove them for now by skipping the 0 entries of 𝒟
+    # the RCT, as estimated by ERA5, has countless 0 entries.
+    # We remove them for now by skipping the 0 entries of Λ
     # Clean missing/incorrect data
-    if 𝒟version == "Bretherton1997"
-        𝒹 = @. clt*lhf/ctrc
-        idxs = findall(x -> !(ismissing(x) || x==0 || isnan(x)), 𝒹)
-        sidxs = findall(>(0), d)
-        idxs = intersect(idxs, sidxs)
-    elseif 𝒟version == "Chung2012"
+    if Λversion == "Bretherton1997"
+        λ = vec(clt) .* vec(lhf) ./ vec(ctrc)
+        idxs = findall(x -> !(ismissing(x) || x==0 || isnan(x)), λ)
+        sidxs = findall(>(0), vec(d))
+        # @show sidxs
+        # idxs = intersect(idxs, sidxs)
+        # @show idxs
+    elseif Λversion == "Chung2012"
         # or, we use an alternative form inspired by chung and teixeira
-        𝒹 = @. lhf/ctrc
+        λ = @. lhf/ctrc
         idxs = findall(>(0), d)
     end
 
-    # scatter!(axs[j], vec(𝒹[idxs]), vec(cf[idxs]);
+    # scatter!(axs[j], vec(λ[idxs]), vec(cf[idxs]);
     # color = (COLORS[1], 0.05), strokewidth = 0, strokecolor = (COLORS[1], 0.01))
-    hexbin!(axs[j], vec(𝒹[idxs]), vec(cf[idxs]); colormap = [:white, :black], bins = (80, 40))
+    hexbin!(axs[j], vec(λ[idxs]), vec(cf[idxs]); colormap = [:white, :black], bins = (80, 40))
 
     # color = (COLORS[1], 0.1), strokewidth = 1, strokecolor = COLORS[1])
 
 
-    # 𝒹 = @. clt2*lhf/ctrc
-    # idxs = findall(x -> !(ismissing(x) || x==0), 𝒹)
+    # λ = @. clt2*lhf/ctrc
+    # idxs = findall(x -> !(ismissing(x) || x==0), λ)
 
-    # scatter!(axs[j], vec(𝒹[idxs]), vec(cf[idxs]);
+    # scatter!(axs[j], vec(λ[idxs]), vec(cf[idxs]);
     # color = (COLORS[2], 0.25), strokewidth = 1, strokecolor = COLORS[2], marker = MARKERS[2])
 
-    # scatter!(axs[j], 2vec(𝒹[idxs]), vec(cf[idxs]);
+    # scatter!(axs[j], 2vec(λ[idxs]), vec(cf[idxs]);
     # color = (COLORS[2], 0.25), strokewidth = 1, strokecolor = COLORS[2])
 
     # plot curve
@@ -182,11 +183,11 @@ end
 cb = Colorbar(fig[1, 4]; colormap = [:white, :black], label = "data density")
 cb.ticks = ([0, 1], ["low", "high"])
 cb.labelpadding = -25
-input = @dict region 𝒟version CLTversion
+input = @dict region Λversion CLTversion
 
 wsave(papersdir("figures", "decoupling_fit.png"), fig)
 
-figuretitle!(fig, savename("all-sky CTRC of Zheng2021", input; connector = ", ", equals = ": "))
+# figuretitle!(fig, savename("all-sky CTRC of Zheng2021", input; connector = ", ", equals = ": "))
 
 display(fig)
 

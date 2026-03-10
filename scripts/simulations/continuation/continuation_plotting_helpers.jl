@@ -1,12 +1,15 @@
+using Attractors
+
 # Helper functions
-TRANSPARENCY = Observable(0.25)
+TRANSPARENCY = Observable(0.25) # can update this observable in any analysis script
+
 state_colors = Dict(
     "Sc ✓" => @lift((COLORS[3], $TRANSPARENCY)),
-    "Sc ↓" => @lift((COLORS[2], $TRANSPARENCY)),
+    "Sc ↓" => @lift((COLORS[5], $TRANSPARENCY)),
     "Sc ↶" => @lift((COLORS[6], $TRANSPARENCY)),
     "Cu" => @lift((COLORS[1], $TRANSPARENCY)),
-    "LC" => @lift((COLORS[4], $TRANSPARENCY)),
-    "X" => @lift((COLORS[5], $TRANSPARENCY))
+    "LC" => @lift((COLORS[2], $TRANSPARENCY)),
+    "X" => @lift((COLORS[4], $TRANSPARENCY))
 )
 
 state_markers = Dict(
@@ -22,9 +25,9 @@ function classify_series(series, collapsed)
     idx = findfirst(!isempty, series)
     isnothing(idx) && return "X"
     A = series[idx]
-    if length(A) > 1
+    if length(A) > 4
         return "LC"
-    elseif A[end][2] > 0.5 # index 2 = cloud fraction
+    elseif A[length(A), :C] > 0.5
         # First see if it starts with Sc in case of recovery
         if idx > 1
             return "Sc ↶"
@@ -33,27 +36,66 @@ function classify_series(series, collapsed)
         else
             return "Sc ✓"
         end
-    else A[end][2] ≤ 0.5
+    elseif A[length(A), :C] ≤ 0.5
         return "Cu"
+    else
+        return "X"
     end
 end
 
+# given a global continuation output for a particular attractor ID,
+# classify it according to one of the 5 categories of the climate change figures
+# (same as keys of the state markers)
+function classify_series(series)
+    # we first check where to start, if we even start
+    idx_start = findfirst(!isempty, series)
+    isnothing(idx_start) && return "X"
+    # we then check the cases one by one. First, Cu or LC cases do not care about
+    # when they started. So we check immediatelly:
+    if length(series[idx_start]) > 4
+        return "LC"
+    elseif series[idx_start][1, :C] < 0.5
+        return "Cu"
+    end
+    # we then do a sanity check that Sc state actually exists
+    if mean(series[idx_start][:, :C]) < 0.5
+        return "X"
+    end
+    # we then check for non-starting Sc
+    if idx_start > 1
+        return "Sc ↶"
+    end
+    # we then check if the simulation persists until the end or not
+    idx_end = findfirst(isempty, series)
+    if isnothing(idx_end)
+        return "Sc ✓"
+    end
+    # then check if there is recovery
+    idx_final = findlast(!isempty, series)
+    if idx_final == length(series)
+        return "Sc ↶"
+    else
+        return "Sc ↓"
+    end
+    return "X"
+end
 
 # Plotting code
 function plot_attractor_series!(axs, observables, ds, attractors_cont)
-    collapse = !isnothing(findlast(!has_stratocumulus, attractors_cont))
-
-    attractors_series = continuation_series(attractors_cont, StateSpaceSet{5, Float64}())
+    attractors_series = continuation_series(attractors_cont, StateSpaceSet{5, Float64}(; names = fill(:x, 5)))
 
     # use the classification to create consistent coloring
-    classification = Dict(k => classify_series(series, collapse) for (k, series) in attractors_series)
+    classification = Dict(k => classify_series(series) for (k, series) in attractors_series)
     colors = Dict(k => state_colors[v] for (k, v) in classification)
     markers = Dict(k => state_markers[v] for (k, v) in classification)
-
     # project to means
     function observable_mean(ds, obs, A)
         isempty(A) && return NaN
-        mean(observe_state(ds, obs, u) for u in A)
+        if isnothing(ds)
+            mean(A[:, obs])
+        else
+            mean(observe_state(ds, obs, u) for u in A)
+        end
     end
     # plot continuation
     t = 0:length(attractors_cont)-1
@@ -61,13 +103,15 @@ function plot_attractor_series!(axs, observables, ds, attractors_cont)
         cont = map(attractors_cont) do attractors
             Dict(k => observable_mean(ds, obs, A) for (k, A) in attractors)
         end
-        plot_continuation_curves!(ax, cont, t; colors, markers, add_legend = false)
+        Attractors.plot_continuation_curves!(ax, cont, t; colors, markers, add_legend = false)
     end
     # I can try to connect the dots here by adding collapse arrows but damn its hard!
-
-    return axs
+    # anyways, record whether this particular simulation has a collapse or not and return
+    has_collapse_label = "Sc ↓" ∈ values(classification)
+    return has_collapse_label
 end
 
+# This function can plot continuations for ANY observable of the SCTEBM!
 function load_n_plot_continuation!(fig_loc, input, used, observables = [:C, :SST]; ids = 1:100, add_legend = true)
     foldergroup = ["sims", "continuations"]
     prefix = "used="*join(string.(used), "+")
@@ -75,7 +119,7 @@ function load_n_plot_continuation!(fig_loc, input, used, observables = [:C, :SST
     data = wload(datadir(foldergroup..., name)*".jld2")
     @unpack continuations, param_values = data
     # Create dynamical system (to observe states)
-    ds, eqs = ctmlm_setup(input)
+    ds, eqs = sctebm_setup(input)
 
     # TODO: make ds, make the function generic
 
@@ -89,30 +133,54 @@ function load_n_plot_continuation!(fig_loc, input, used, observables = [:C, :SST
     rowgap!(fig_loc.layout, 4)
 
     if add_legend
-        state_names = sort(collect(keys(state_colors)))
-        elements = [
-            [LineElement(color = state_colors[k][][1]),
-            MarkerElement(color = state_colors[k][][1], marker = state_markers[k], markersize = 25)]
-            for k in state_names
-        ]
+        cloud_transition_legend!(fig_loc[:, 2])
     end
-    Legend(fig_loc[:, 2], elements, state_names)
 
     return axs
 end
 
-function load_n_plot_continuation_only_c!(axc, input, used; add_collapse = true)
+function cloud_transition_legend!(figloc)
+    state_names = sort(collect(keys(state_colors)))
+    filter!(≠("X"), state_names)
+    elements = [
+        [LineElement(color = state_colors[k][][1]),
+        MarkerElement(color = state_colors[k][][1], marker = state_markers[k], markersize = 25)]
+        for k in state_names
+    ]
+    Legend(figloc, elements, state_names)
+end
+
+
+# This function only plots cloud fraction and therefore does not need to initialize the
+# dynamical system instance to observe a state.
+function load_n_plot_continuation_only_c!(axc, input, used; add_collapse = true, ids = 1:100)
     foldergroup = ["sims", "continuations"]
     prefix = "used="*join(string.(used), "+")
     name = savename(input)*"_"*prefix
     data = wload(datadir(foldergroup..., name)*".jld2")
-    ds, eqs = ctmlm_setup(input)
-    @unpack continuations, only_Cu_time, no_Sc_time = data
+    @unpack continuations, no_Sc_time = data
+    has_collapse = falses(ids)
+    global acont = 1
     for (i, attractors_cont) in enumerate(continuations)
-        plot_attractor_series!([axc], [:C], ds, attractors_cont)
+        i ∉ ids && continue
+
+        # Fix for loading old data before named dimensions in SSSet
+        if typeof(attractors_cont[1]) <: DrWatson.JLD2.SerializedDict
+            stype = typeof(StateSpaceSet{5, Float64}(; names = fill(:x, 5)))
+            acont = Vector{Dict{Int, stype}}()
+            names = [:SST, :C, :z_b, :s_b, :q_b]
+            for j in 1:length(attractors_cont)
+                dict = Dict(key => StateSpaceSet(val.data; names) for (key, val) in attractors_cont[j].kvvec)
+                push!(acont, dict)
+            end
+            attractors_cont = acont
+        end
+
+        acont = attractors_cont
+        has_collapse[i] = plot_attractor_series!([axc], [:C], nothing, attractors_cont)
     end
     if add_collapse
-        percent = 100count(!isnan, no_Sc_time)/length(no_Sc_time)
+        percent = 100count(has_collapse)/length(has_collapse)
         textbox!(axc, "$(percent)% Sc ↓";
             valign = 0.2, halign = 0.1,
         )
