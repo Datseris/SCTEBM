@@ -13,9 +13,9 @@ cooling = :q_x
 invfix = :difference
 Ld = :three_layer
 entrain = :Stevens2006
-ΔF = :ctrc
+ΔF_s = :ctrc
 invdec = true # having this as `true` promotes the LC stability up to very high τ_C
-input = @dict(cooling, invfix, Ld, ΔF, entrain, invdec)
+input = @dict(cooling, invfix, Ld, ΔF_s, entrain, invdec)
 
 starting_parameters = Dict(
     :D => 2.5e-6, :U => 7, :q_x_rate => 2, :RH₊ => 0.1,
@@ -24,7 +24,7 @@ starting_parameters = Dict(
 
 ds, eqs = sctebm_setup(; input..., starting_parameters)
 
-obs = [:C, :SST, :q_b, :𝒟, :CTRC, :RCT, :LHF]
+obs = [:C, :SST, :q_b, :Λ, :CTRC, :RCT, :LHF]
 
 X, t = trajectory(ds, 100.0; Δt = 0.01, save_idxs = obs, Ttr = 200.0)
 
@@ -43,7 +43,7 @@ ylabels = string.(obs))
 
 tscales = [current_parameter(ds, :τ_C),
 1/current_parameter(ds, :D)/CTMLM.sec_in_day,
-1200/(current_parameter(ds, :U)*current_parameter(ds, :c_d) + observe_state(ds, :w_e))/CTMLM.sec_in_day,
+1200/(current_parameter(ds, :U)*current_parameter(ds, :d_c) + observe_state(ds, :w_e))/CTMLM.sec_in_day,
 ]
 tlabels = ["τ_C", "τ_z", "τ_q"]
 

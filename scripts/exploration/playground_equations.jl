@@ -21,6 +21,8 @@ include("playground_helpers.jl")
 @variables obs(t)
 @variables clt2(t)
 @variables w_e2(t)
+@variables N(t) [description = "aerosol concentraion"]
+@parameters N = 200.0 [description = "aerosol concentraion"]
 
 eqs = [
     # clouds
@@ -29,6 +31,7 @@ eqs = [
     # TimeDerivative(CTMLM.C, 0), # use this to make cloud fraction a fixed number
     CTMLM.cloud_base_height(:Bolton1980),
     CTMLM.cloud_emissivity(:fraction),
+    CTMLM.cloud_albedo(),
     # Boundary layer standard stuff
     CTMLM.sst_dynamic(),
     CTMLM.mlm_dynamic(),
@@ -44,7 +47,7 @@ eqs = [
     CTMLM.cloud_longwave_cooling(
         # cloud emissivity decides this because otherwise we don't have cloud
         # fraction affecting the longwave component
-        cloud_fraction = false
+        false
     ),
     CTMLM.cloud_shortwave_warming(:insolation),
     CTMLM.mlm_radiative_cooling(:ctrc),
@@ -59,7 +62,7 @@ eqs = [
     ParameterProcess(CTMLM.s_x, 0.0),
 
     # CTMLM.ζ ~ CTMLM.RCT*β₋*(1 - CTMLM.C)/0.7/2,
-    CTMLM.ζ ~ CTMLM.i_𝒟*CTMLM.RCT*β₋/2,
+    CTMLM.ζ ~ CTMLM.i_Λ*CTMLM.RCT*β₋/2,
     # CTMLM.bbl_Δ₊sᵥ(),
     # For demonstration:
     # TimeDerivative(CTMLM.ζ, CTMLM.RCT*β₋*(1 - CTMLM.C)/2, 0.25),
@@ -78,21 +81,27 @@ eqs = [
     # CTMLM.entrainment_velocity(:DalGesso2014; w_e = w_e2, use_augmentation = true),
 
     # Here I am testing enabling the decoupling
-    CTMLM.𝒹_q ~ clamp((CTMLM.z_b*CTMLM.RCT/2750)^1.3, 0, 0.5),
-    CTMLM.𝒹_s ~ 0.5*CTMLM.𝒹_q,
+    CTMLM.λ_q ~ clamp((CTMLM.z_b*CTMLM.RCT/2750)^1.3, 0, 0.5),
+    CTMLM.λ_s ~ 0.5*CTMLM.λ_q,
     # You can re-form analytically the expressions
-    # from the `𝒹` definitions to my existing inversion as:
-    CTMLM.Δ₊s ~ (1 - CTMLM.i_𝒟*CTMLM.𝒹_s)*(CTMLM.s₊ - CTMLM.s_b),
-    CTMLM.Δ₊q ~ (1 - CTMLM.i_𝒟*CTMLM.𝒹_q)*(CTMLM.q₊ - CTMLM.q_b),
+    # from the `λ` definitions to my existing inversion as:
+    CTMLM.Δ₊s ~ (1 - CTMLM.i_Λ*CTMLM.λ_s)*(CTMLM.s₊ - CTMLM.s_b),
+    CTMLM.Δ₊q ~ (1 - CTMLM.i_Λ*CTMLM.λ_q)*(CTMLM.q₊ - CTMLM.q_b),
     # But still even with those the Sc state has larger height than the Cu.
-    # Only if one changes the ΔF to not be proportional to the cloud fraction
+    # Only if one changes the ΔF_s to not be proportional to the cloud fraction
     # one restores the "correct" balance of heights... E.g.:
-    # CTMLM.ΔF ~ 40.0,
+    # CTMLM.ΔF_s ~ 40.0,
     # fake ~ CTMLM.Cᵢ,
     # Other observables I may care about
     CTMLM.cloud_base_height(:exact, z_cb_ex),
 
-    # obs ~ (CTMLM.z_cb - CTMLM_z_ct)^2
+    # N ~ cos(t)*x^2 - 1,
+    # CTMLM.C ~ N,
+
+    # obs ~ (CTMLM.z_cb - CTMLM_z_ct)^2,
+    CTMLM.ΔF_q ~ 2.0,
+
+    # Differential(t)(T_tropic) ~ κ*(T_subtropic - T_tropic),
 ]
 
 ds = processes_to_coupledodes(eqs, CTMLM;

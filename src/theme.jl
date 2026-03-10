@@ -19,7 +19,8 @@ function color_from_u0(u0::Dict; Cg = [0.05, 0.5, 0.95], SSTg = [285.0, 295, 305
     l = LinearIndices((length(Cg), length(SSTg)))[idxC, idxS]
     c = to_color(COLORS[l])
     # add some random variability
-    c = RGBf(c.r + 1e-2randn(), c.g + 1e-2randn(), c.b + 1e-2randn())
+    r() = 1 + 2e-2randn()
+    c = RGBf(c.r*r(), c.g*r(), c.b*r())
 end
 
 color_from_u0(::AbstractArray) = to_color(COLORS[rand(Int)])
@@ -40,3 +41,7 @@ function density_limits(symbol)
         :EIS => (-1, 12),
     ), symbol, (nothing, nothing))
 end
+
+# so that we can label axesgrid easier via `transpose`:
+import LinearAlgebra
+LinearAlgebra.transpose(ax::Axis) = ax

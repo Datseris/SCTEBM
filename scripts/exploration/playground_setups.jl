@@ -21,11 +21,12 @@ ds, eqs = sctebm_setup(;
     cdversion = :sigmoid,
     invfix = :difference,
     Ld = :three_layer,
-    ΔF = :Gesso2014,
+    ΔF_s = :three_layer,
     invdec = true,
     entrain = :Stevens2006,
-    ftrgrad = :none,
+    ftrgrad = :weak,
     cloud_rad = :lwp,
+    cloud_limit = true,
 )
 
 # %% Configure and launch GUI
@@ -33,9 +34,11 @@ ds, eqs = sctebm_setup(;
 # which can include arbitrary symbolic expressions or functions as per DynamicalSystems.jl.
 # See `playground_helpers.jl` for predefined options
 GUI_obs = :none
-# GUI_obs = [:CTRC, :LHF, :RCT, :𝒟, :α_C, :ε_C]
-GUI_obs = [:C, :SST, :α_C, :ε_C]
+# GUI_obs = [:CTRC, :LHF, :RCT, :Λ, :α_C, :ε_C]
+# GUI_obs = [:CTRC, :SST, :α_C, :ε_C, :CLT, :z_b]
+GUI_obs = [:CTRC, :α_C, :ε_C, :C_Λ, :C_κ, :CLT]
+
 # The `GUI_par` can only be a vector of symbols each representing a system parameter
-GUI_par = [:U, :D, :δ_Δ₊T, :q_x_rate, :RH₊, :CO2]
+GUI_par = [:U, :D, :δ_Δ₊T, :g_C, :RH₊, :α_C_max]
 
 fig, dsobs = ctmlm_gui(ds, GUI_par, GUI_obs)

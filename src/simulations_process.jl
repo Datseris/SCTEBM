@@ -59,7 +59,7 @@ function multiparameter_multistability_process(input;
         delete_files = false, plot_density = true, plot_rmi = true, trials = 1000,
         save_plots = true,
         xMI = parameters_to_obtain, yMI = [:SST, :C], estimate_rmi = true,
-        save_processed_output = true,
+        save_processed_output = true, save_distributions = false,
     )
     # init
     filesfolder = datadir(foldergroup..., savename(input))
@@ -185,8 +185,11 @@ function plot_rmi_scatters(input, observables_values, parameters_values, xMI, yM
         x = parameters_values[xname]
         if xname == :D # special normalization just for D
             x = x ./ 1e-6
-            axs[length(yMI), i].xlabel = "D (× 10⁻⁶)"
+            axs[length(yMI), i].xlabel = "D (× 10⁻⁶) [1/s]"
+        elseif xname == :U
+            axs[length(yMI), i].xlabel = "U [m/s]"
         end
+
         for (j, yname) in enumerate(yMI)
             y = observables_values[yname]
             rmi = rMI[yname][xname]
@@ -213,7 +216,6 @@ function process_multiparam_multistability_analysis(input, params, foldergroup;
             :C, :SST, :q_b, :z_b, :s_b, :CTRC, :Ld, :Lnet, :LHF, :RCT, :SHF, :T₊, :ASW
         ],
         kw_process = NamedTuple(), kw_analysis = NamedTuple(),
-        save_distributions = false,
     )
     # skip if the whole simulation has been performed already
     outfile = datadir(foldergroup..., savename(input, "jld2"))
@@ -232,7 +234,7 @@ function process_multiparam_multistability_analysis(input, params, foldergroup;
     # then aggregate the individual parameter conbimation simulations
     # into a single file and delete the individual files
     output = multiparameter_multistability_process(input;
-        foldergroup, delete_files, observables_to_obtain, save_distributions, kw_process...
+        foldergroup, delete_files, observables_to_obtain, kw_process...
     )
     return output
 end

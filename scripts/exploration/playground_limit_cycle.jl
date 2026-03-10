@@ -10,7 +10,7 @@ include("playground_helpers.jl")
 ds, eqs = sctebm_setup(;
     cooling = :q_x,
     Ld = :three_layer,
-    ΔF = :three_layer,
+    ΔF_s = :three_layer,
     invfix = :difference,
     ftrgrad = :none,
     entrain = :Stevens2006,

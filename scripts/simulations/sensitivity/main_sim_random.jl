@@ -5,16 +5,16 @@
 # You can run this with or without CO2 variability: simply comment out the CO2 distribution
 # in the parameters and the CO2-related aspects in the `dict_list` call.
 # To run only a specific combination just call the final line in the script with `single_input`
+
 using DrWatson
 @quickactivate
 using DynamicalSystems
 using ConceptualClimateModels
 using Statistics
 using Distributions
-include(srcdir("CloudToppedMixedLayerModel", "CloudToppedMixedLayerModel.jl"))
 include(srcdir("sctebm_setups.jl"))
-include(srcdir("simulations_run.jl"))
 include(srcdir("simulations_process.jl"))
+include(srcdir("aspects_definition.jl"))
 
 ###########################################################################################
 # Inputs
@@ -29,19 +29,25 @@ single_input = Dict(
     :invfix => :difference,
     :ftrgrad => :weak,
     :Ld => :three_layer,
-    :ΔF => :ctrc,
+    :ΔF_s => :ctrc,
+    :cloud_rad => :const,
 )
 
 # this is used for multiple variants
 many_inputs = dict_list(Dict(
     :cooling => :q_x,
-    :ftrgrad => :weak,
-    :entrain => :Gesso2014,
+    :ftrgrad => [:none, ],
+    :entrain => [:Stevens2006, :Gesso2014],
     :Ld => [:three_layer, :fixed],
-    :ΔF => [:Gesso2014],
+    :ΔF_s => [ :three_layer],
     :invfix => [:difference, :temperature],
     :co2 => [1, 2, 3],
+    :cloud_rad => [:const,],
 ))
+shuffle!(many_inputs)
+
+# all possible variants are given by
+all_inputs = dict_list(ASPECTS_OPTIONS)
 
 # Input 2: distributions of parameters
 # It's a dictionary mapping named parameters (symbols) to distributions
@@ -72,5 +78,5 @@ function run_sim(input)
     )
 end
 
-run_sim(single_input) # uncomment for single variant
-# map(input -> run_sim(input), many_inputs) # uncomment for multiple variants
+# run_sim(single_input) # uncomment for single variant
+map(input -> run_sim(input), many_inputs) # uncomment for multiple variants

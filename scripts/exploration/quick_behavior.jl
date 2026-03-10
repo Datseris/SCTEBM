@@ -7,21 +7,15 @@ using Distributions
 include(srcdir("sctebm_setups.jl"))
 include(srcdir("simulations_process.jl"))
 
-# TODO: Damn, the "same" input as before now gives too high SSTs
-# but I thought I didnt change anything... Fucking hell, next time
-# always do this step-by-step to ensure nothing truly changes.
-
-# TODO: When turning on LWP-dependent cloud rads, there are huge divergences
-# for the model. Also CTRC becomes negative. How can this be...?
-
 input = Dict(
     :cooling => :q_x,
-    :entrain => :Gesso2014,
+    :entrain => :Stevens2006,
     :cloud_rad => :lwp,
+    :cloud_limit => true,
     :invfix => :difference,
     :ftrgrad => :weak,
     :Ld => :three_layer,
-    :ΔF => :ctrc,
+    :ΔF_s => :three_layer,
 )
 
 distributions = Dict(
@@ -32,7 +26,7 @@ distributions = Dict(
     :δ_FTR => Uniform(0, 10),
 )
 
-observables_to_obtain = [:C, :SST, :α_C, :ε_C]
+observables_to_obtain = [:C, :SST, :α_C, :ε_C, :LWP]
 
 # Plot distributions
 foldergroup = ["sims", "quick_obs_distr"]

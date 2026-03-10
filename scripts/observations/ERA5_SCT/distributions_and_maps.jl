@@ -11,13 +11,28 @@ csplit = 0.0
 cidxs1 = findall(≥(csplit), outputs[:C])
 cidxs2 = findall(<(csplit), outputs[:C])
 
-idxs1 = intersect(cidxs1, invalid_idxs)
-idxs2 = intersect(cidxs2, invalid_idxs)
+idxs1 = intersect(cidxs1, valid_idxs)
+idxs2 = intersect(cidxs2, valid_idxs)
 
-figin = Figure(size = (1000, 1000))
+figin = Figure(size = (3figwidth/4, figheight*3))
 figout = Figure(size = (1200, 1000))
 
+# Add units
+units = Dict(
+  :U => " [m/s]",
+  :d_c => " [10⁻³]",
+  :T_FTR => " [K]",
+  :D => " [10⁻⁶ 1/s]",
+  :α_a => "",
+  :α_c => "",
+  :S => " [W/m²]",
+  :EIS => " [K]",
+  :RH₊ => "",
+)
+inputs[:d_c] = inputs[:d_c] .* 1000
+counter = 0
 for (data, fig) in zip((inputs, outputs), (figin, figout))
+    counter += 1
     for (k, name) in enumerate(keys(data))
         i, j = Tuple(CartesianIndices((3,5))[k])
         x = data[name]
@@ -34,7 +49,13 @@ for (data, fig) in zip((inputs, outputs), (figin, figout))
             mC = round(mean(v); sigdigits = 3)
             density!(ax, v; label = string(mC), color = (COLORS[k], 0.25), linestyle = :dash, strokecolor = COLORS[k], strokewidth = 3)
         end
-        ax.xlabel = string(name)
+
+        if counter == 1
+            ax.xlabel = string(name)*units[name]
+        else
+            ax.xlabel = string(name)
+        end
+
         xlims!(ax, density_limits(name))
     end
 end
@@ -44,7 +65,7 @@ colgap!(figout.layout, 25)
 
 # Save for paper without title
 wsave(papersdir("figures", "observations_inputs"), figin)
-wsave(papersdir("figures", "observations_ouputs"), figout)
+# wsave(papersdir("figures", "observations_ouputs"), figout)
 
 # Save with title for my reference
 intit = "ERA5 - $(region) - inputs - $(date)"
